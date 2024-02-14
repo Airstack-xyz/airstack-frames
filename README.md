@@ -1,6 +1,7 @@
 # Airstack Frames
 
-Collection of farcaster frames showcasing Airstack API capabilities
+Public repo for Airstack contributions to Farcaster Frames ecosystem
+
 
 ## Getting Started
 
