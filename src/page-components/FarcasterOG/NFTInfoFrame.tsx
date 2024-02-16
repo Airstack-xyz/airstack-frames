@@ -1,41 +1,32 @@
-import { fetchQuery, init } from "@airstack/node";
 import { Frame } from "frames.js";
-import { readFileSync } from "fs";
-import { join } from "path";
-import { AIRSTACK_API_KEY, BASE_URL } from "../../constants";
-import { tokenDetailsQuery } from "../../queries/tokenDetails";
-import { capitalizeFirstLetter, getEllipsisText } from "../../utils";
-import { getBase64FrameImage } from "../../utils/getBase64FrameImage";
-import { BlockchainIcon, CalendarIcon, MintsIcon } from "./Icons";
-import { TOKENS } from "./data";
-import { TokenDetailsQueryResponse } from "./types";
+import { concertOneFontData } from "../../assets/concertOneFont";
+import { PLACEHOLDER_IMAGE_URL } from "../../constants/image";
+import { getBase64JpegImage } from "../../utils/getBase64JpegImage";
+import { readImageAsBase64 } from "../../utils/readImageAsBase64";
+import {
+  capitalizeFirstLetter,
+  truncateWithEllipsis,
+} from "../../utils/stringUtils";
+import { TokenData } from "./types";
 
-init(AIRSTACK_API_KEY);
-
-const placeholderImageUrl = `${BASE_URL}/images/placeholder.svg`;
-
-const concertOneFontPath = join(
-  process.cwd(),
-  "public/fonts/ConcertOne-Regular.ttf"
+const calendarIconBase64 = readImageAsBase64(
+  "./src/assets/FarcasterOG/calendar-icon.png",
+  "image/png"
 );
-const concertOneFontData = readFileSync(concertOneFontPath);
 
-export const getNFTInfoFrameImage = async ({
-  tokenIndex,
-}: {
-  tokenIndex: number;
-}) => {
-  const nftItem = TOKENS[tokenIndex] || TOKENS[0];
+const blockchainIconBase64 = readImageAsBase64(
+  "./src/assets/FarcasterOG/blockchain-icon.png",
+  "image/png"
+);
 
-  const { data } = await fetchQuery(tokenDetailsQuery, {
-    address: nftItem.address,
-    blockchain: nftItem.blockchain,
-  });
+const usersIconBase64 = readImageAsBase64(
+  "./src/assets/FarcasterOG/users-icon.png",
+  "image/png"
+);
 
-  const queryData = data as TokenDetailsQueryResponse;
-
-  const token = queryData?.Token;
-  const tokenTransfer = queryData?.TokenTransfers?.TokenTransfer?.[0];
+export const getNftInfoFrameImage = async (tokenData: TokenData) => {
+  const token = tokenData?.Token;
+  const tokenTransfer = tokenData?.TokenTransfers?.TokenTransfer?.[0];
 
   const blockTimestamp = tokenTransfer?.blockTimestamp || "";
 
@@ -43,7 +34,7 @@ export const getNFTInfoFrameImage = async ({
 
   const tokenName = token?.name;
 
-  const tokenBlockchain = capitalizeFirstLetter(nftItem.blockchain);
+  const tokenBlockchain = capitalizeFirstLetter(token.blockchain);
 
   const tokenSupply = token?.totalSupply;
 
@@ -52,7 +43,7 @@ export const getNFTInfoFrameImage = async ({
     token?.logo?.small ||
     token?.contractMetaData?.image ||
     token?.projectDetails?.imageUrl ||
-    placeholderImageUrl;
+    PLACEHOLDER_IMAGE_URL;
 
   const description =
     tokenNft?.metaData?.description ||
@@ -62,7 +53,7 @@ export const getNFTInfoFrameImage = async ({
 
   const tokenDescription = description.startsWith("Released on")
     ? ""
-    : getEllipsisText(description, 210);
+    : truncateWithEllipsis(description, 210);
 
   const tokenReleaseDate = blockTimestamp.substring(0, 10);
 
@@ -75,21 +66,10 @@ export const getNFTInfoFrameImage = async ({
         padding: 30,
         width: "100%",
         height: "100vh",
-        background: "#061523",
+        backgroundImage: "linear-gradient(to bottom, #2c414b, #0f202d)",
         color: "white",
       }}
     >
-      <div
-        style={{
-          position: "absolute",
-          width: "160%",
-          height: 342,
-          top: -262,
-          background: "#ABD7D8",
-          opacity: 0.5,
-          filter: "blur(250px)",
-        }}
-      />
       <div style={{ fontSize: 40 }}>Find the Farcaster OG&apos;s</div>
       <div
         style={{
@@ -115,32 +95,36 @@ export const getNFTInfoFrameImage = async ({
             gap: 15,
           }}
         >
-          <div style={{ fontSize: 26 }}>{tokenName}</div>
+          <div style={{ fontSize: 30 }}>{tokenName}</div>
           <div style={{ display: "flex", alignItems: "flex-end" }}>
-            <CalendarIcon />
-            <span style={{ marginLeft: 10, color: "#FFFFFF99", fontSize: 22 }}>
+            <img alt="CalendarIcon" src={calendarIconBase64} height={24} />
+            <span style={{ marginLeft: 10, color: "#FFFFFF99", fontSize: 24 }}>
               Released on {tokenReleaseDate}
             </span>
           </div>
           {!!tokenDescription && (
-            <div style={{ color: "#FFFFFF99", fontSize: 22, lineHeight: 2 }}>
+            <div style={{ color: "#FFFFFF99", fontSize: 24, lineHeight: 2 }}>
               {tokenDescription}
             </div>
           )}
           {tokenSupply ? (
             <div style={{ display: "flex", alignItems: "flex-end" }}>
-              <MintsIcon />
+              <img alt="UsersIcon" src={usersIconBase64} height={24} />
               <span
-                style={{ marginLeft: 10, color: "#FFFFFF99", fontSize: 22 }}
+                style={{ marginLeft: 10, color: "#FFFFFF99", fontSize: 24 }}
               >
                 {tokenSupply} mints on {tokenBlockchain}
               </span>
             </div>
           ) : (
             <div style={{ display: "flex", alignItems: "flex-end" }}>
-              <BlockchainIcon />
+              <img
+                alt="BlockchainIcon"
+                src={blockchainIconBase64}
+                height={24}
+              />
               <span
-                style={{ marginLeft: 10, color: "#FFFFFF99", fontSize: 22 }}
+                style={{ marginLeft: 10, color: "#FFFFFF99", fontSize: 24 }}
               >
                 Deployed on {tokenBlockchain}
               </span>
@@ -151,7 +135,9 @@ export const getNFTInfoFrameImage = async ({
     </div>
   );
 
-  const base64Image = await getBase64FrameImage(component, {
+  const base64Image = await getBase64JpegImage(component, {
+    width: 955,
+    height: 500,
     fonts: [
       {
         name: "Concert One",
@@ -165,16 +151,16 @@ export const getNFTInfoFrameImage = async ({
   return base64Image;
 };
 
-export const getNFTInfoFrame = ({
+export const getNftInfoFrame = ({
   image,
   postUrl,
-  downloadCSVLink,
-  getAPILink,
+  downloadCsvLink,
+  getApiLink,
 }: {
   image: string;
   postUrl: string;
-  downloadCSVLink: string;
-  getAPILink: string;
+  downloadCsvLink: string;
+  getApiLink: string;
 }): Frame => {
   const frame: Frame = {
     version: "vNext",
@@ -188,12 +174,12 @@ export const getNFTInfoFrame = ({
       {
         label: "Download CSV",
         action: "link",
-        target: downloadCSVLink,
+        target: downloadCsvLink,
       },
       {
         label: "Get API",
         action: "link",
-        target: getAPILink,
+        target: getApiLink,
       },
     ],
     ogImage: image,

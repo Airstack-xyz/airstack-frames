@@ -34,7 +34,7 @@ export type TokenTransfer = {
   blockTimestamp: string;
 };
 
-export type TokenDetailsQueryResponse = {
+export type TokenData = {
   Token: Token;
   TokenTransfers: {
     TokenTransfer: TokenTransfer[];
